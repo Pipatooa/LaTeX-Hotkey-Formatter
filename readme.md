@@ -2,7 +2,27 @@
 LHF is a LaTeX to Unicode parser that is activated by a configurable hotkey. When activated, highlighted text will be reformatted.
 
 ### Formatting controls:
-Any line of the captured string starting with `\t` will be converted into a unicode representation of the following LaTeX.
+Several formatting controls exist, which determine what the formatter will do with any given bit of input.
+
+##### LaTeX:
+`\t` will convert anything following it from LaTeX into a unicode representation.
+This flag can only be used at the beginning of a line.
+
+Any text found between two `$` symbols will also be converted from LaTeX into unicode. To include a regular dollar sign, use `\$`.
+
+##### History:
+`\h` can be used to retrieve a history entry. By default, it will be replaced with the previous entry. To retrieve further history `\h[entry_num]` can be used where `entry_num` is the number of entries to look back. `\h[1]` will return the previous entry, `\h[2]` will return the next previous, and so forth. This flag can be used anywhere within a section of text.
+
+`\lh[entries]` can be used to retrieve a list of history entries . This flag can only be used on its own - no other text must be present.
+
+##### Templates:
+`\s[name]` and `\l[name]` can be used to save and load templates where `name` is the name of the template to be loaded.
+
+When `\s[name]` is placed at the beginning of a new line, anything following the flag will be saves as a template.
+
+`\l[name]` can be present anywhere within a string, and it will be replaced with the saved template with that name. If no template with that name, can be found, it will not be replaced.
+
+`\d[name]` can also be used to delete a template.
 
 ### Requirements:
 Windows:
