@@ -1,4 +1,4 @@
-# Latex Hotkey Formatter
+# LaTeX Hotkey Formatter
 LHF is a LaTeX to Unicode parser that is activated by a configurable hotkey. When activated, highlighted text will be reformatted.
 
 ### Formatting controls:
@@ -13,7 +13,7 @@ Any text found between two `$` symbols will also be converted from LaTeX into un
 ##### History:
 `\h` can be used to retrieve a history entry. By default, it will be replaced with the previous entry. To retrieve further history `\h[entry_num]` can be used where `entry_num` is the number of entries to look back. `\h[1]` will return the previous entry, `\h[2]` will return the next previous, and so forth. This flag can be used anywhere within a section of text.
 
-`\lh[entries]` can be used to retrieve a list of history entries . This flag can only be used on its own - no other text must be present.
+`\lh[entries]` can be used to retrieve a list of history entries, where `entries` is the number of previous entries to display. This flag can only be used on its own - no other text must be present.
 
 ##### Templates:
 `\s[name]` and `\l[name]` can be used to save and load templates where `name` is the name of the template to be loaded.
