@@ -21,9 +21,7 @@ When `\s[name]` is placed at the beginning of the captured string, the rest of t
 
 `\l[name]` can be present anywhere within a string, and it will be replaced with the saved template with that name. If no template with that name, can be found, it will not be replaced.
 
-`\d[name]` can be used to delete a template. This flag can only be used on its own.
-
-To obtain a list of all templates, use `\lt`. This flag can only be used on its own.
+Use `\lt` to obtain a list of saved templates and `\d[name]` to delete a template. These flag can only be used on their own.
 
 ### Requirements:
 Windows:
