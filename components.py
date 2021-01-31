@@ -366,11 +366,6 @@ class ScriptGroup(Component):
         return BuiltComponent(width, height, new_lines, baseline, "inline")
 
 
-class GenericFunction(TextComponent):
-    def __init__(self, func_name):
-        super().__init__(func_name + " ")
-
-
 # ------ Main ----- #
 bracket_group_components = {
     "(": RoundBracketGroup,
