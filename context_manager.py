@@ -1,13 +1,12 @@
 import configparser
-import re
-import sys
 import ctypes
 import ctypes.wintypes
 import os
-
-from fontTools.ttLib import TTFont
+import re
+import sys
 from functools import lru_cache
 
+from fontTools.ttLib import TTFont
 
 if sys.platform in ("linux", "linux2"):
     raise NotImplementedError(f"Linux is not currently supported")
@@ -70,6 +69,7 @@ class Context:
         self.window_title = window_title
 
         self.font = Context._get_font(entry["font"])
+        self.tabsize = float(entry["tabsize"])
 
     @staticmethod
     def _get_font(path):
@@ -81,10 +81,11 @@ class Context:
         return re.fullmatch(self.executable, executable) and re.fullmatch(self.window_title, window_title)
 
     def __repr__(self):
-        return f"<Context exe='{self.executable}' title='{self.window_title}' font={repr(self.font)}>"
+        return f"<Context exe='{self.executable}' title='{self.window_title}' " \
+               f"font={repr(self.font)} tabsize={self.tabsize}>"
 
 
-def get_window():
+def _get_window():
     platform = sys.platform
 
     if platform in ("Windows", "win32", "cygwin"):
@@ -112,7 +113,7 @@ def _get_window_windows():
 
 
 def get_context():
-    executable, window_title = get_window()
+    executable, window_title = _get_window()
 
     for c in contexts:
         if c.check_match(executable, window_title):
@@ -123,7 +124,7 @@ def get_context():
 
 # ----- Main ----- #
 parser = configparser.ConfigParser()
-parser.read("./contexts.ini")
+parser.read("./contexts.ini", encoding="utf-8")
 
 default_entry = dict(parser["DEFAULT"])
 default_context = Context(None, None, default_entry)

@@ -3,13 +3,13 @@ import math
 
 
 class BuildContext:
-    def __init__(self, font):
-        self.font = font
+    def __init__(self, context):
+        self.context = context
         self.baseline = 0
         self.height = 1
 
     def new(self):
-        return BuildContext(self.font)
+        return BuildContext(self.context)
 
     def update(self, built_component):
         self.baseline = built_component.baseline
@@ -63,8 +63,8 @@ class BuiltComponent:
         self.lines = [a + b for a, b in zip(self.lines, other.lines)]
         self.width += other.width
 
-    def render(self, font):
-        return "\n".join(line.render(font) for line in reversed(self.lines))
+    def render(self, context):
+        return "\n".join(line.render(context) for line in reversed(self.lines))
 
 
 class Line:
@@ -77,20 +77,30 @@ class Line:
     def shift(self, offset):
         self.items = [(pos + offset, text) for pos, text in self.items]
 
-    def render(self, font):
+    def render(self, context):
         partial = []
 
         self.items.sort()
 
+        tab_width = context.tabsize * context.font.space_width
         last_pos = 0
+
         for pos, text in self.items:
             delta = pos - last_pos
-            new = " " * math.floor(delta / font.space_width) + text
+
+            num_tabs = math.floor(delta / tab_width)
+            delta -= num_tabs * tab_width
+            last_pos += num_tabs * tab_width
+
+            num_spaces = math.floor(delta / context.font.space_width)
+            last_pos += num_spaces * context.font.space_width
+
+            new = "\t" * num_tabs + " " * num_spaces + text
+            last_pos += context.font.get_text_width(text)
 
             partial.append(new)
-            last_pos += font.get_text_width(new)
 
-        return "".join(partial)
+        return "".join(partial).rstrip(" ")
 
     def get_raw(self):
         return "".join(x[2] for x in self.items)
@@ -105,15 +115,12 @@ class Line:
 
 
 class Component:
-    def __init__(self):
-        pass
-
     def build(self, build_context):
         return BuiltComponent(0, 0, [], 0, "inline")
 
-    def render(self, font):
-        build_context = BuildContext(font)
-        return self.build(build_context).render(font)
+    def render(self, context):
+        build_context = BuildContext(context)
+        return self.build(build_context).render(context)
 
 
 class TextComponent(Component):
@@ -127,10 +134,10 @@ class TextComponent(Component):
         return pos, text
 
     def build(self, build_context):
-        width = max(build_context.font.get_text_width(line) for line in self.text)
+        width = max(build_context.context.font.get_text_width(line) for line in self.text)
         height = len(self.text)
 
-        lines = [Line(*TextComponent._center(build_context.font, line, width)) for line in self.text]
+        lines = [Line(*TextComponent._center(build_context.context.font, line, width)) for line in self.text]
         baseline = math.ceil(height / 2) - 1
 
         return BuiltComponent(width, height, lines, baseline, "inline")
@@ -175,10 +182,10 @@ class Fraction(Component):
         top_built = self.top.build(build_context.new())
         bottom_built = self.bottom.build(build_context.new())
 
-        div_char_width = build_context.font.get_text_width(self.div_char)
+        div_char_width = build_context.context.font.get_text_width(self.div_char)
         divider = self.div_char * (math.ceil(max(top_built.width, bottom_built.width) / div_char_width) + self.overfill)
 
-        width = build_context.font.get_text_width(divider)
+        width = build_context.context.font.get_text_width(divider)
         baseline = len(bottom_built.lines)
 
         top_delta = (width - top_built.width) / 2
@@ -233,8 +240,8 @@ class FlexibleGroup(ComponentContainer):
         left_chars = list(self.left_chars.get_chars(built.height))
         right_chars = list(self.right_chars.get_chars(built.height))
 
-        left_width = max(build_context.font.get_text_width(char) for char in left_chars)
-        right_width = max(build_context.font.get_text_width(char) for char in right_chars)
+        left_width = max(build_context.context.font.get_text_width(char) for char in left_chars)
+        right_width = max(build_context.context.font.get_text_width(char) for char in right_chars)
 
         new_lines = []
         for start_char, line, end_char in zip(left_chars, built.lines, right_chars):

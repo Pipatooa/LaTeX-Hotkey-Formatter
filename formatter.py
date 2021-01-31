@@ -1,7 +1,7 @@
 import re
 
-import latex_parser
 import context_manager
+import latex_parser
 
 _context = None
 
@@ -14,7 +14,7 @@ def _substitute_latex(match):
     else:
         raise TypeError(f"Cannot perform latex subsitution on type {type(match)}")
 
-    parsed = latex_parser.parse(content, _context.font)
+    parsed = latex_parser.parse(content, _context)
     if len(parsed.split("\n")) > 1:
         return before + "\n" + parsed + "\n"
 

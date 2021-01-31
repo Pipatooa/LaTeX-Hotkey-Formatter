@@ -2,7 +2,6 @@ import collections
 import re
 
 import components
-import context_manager
 
 
 class Tokenizer:
@@ -145,7 +144,7 @@ class Tokenizer:
         pass
 
     @staticmethod
-    def tokenize(source, /, show_steps=False):
+    def tokenize(source, show_steps=False):
         def show_step(*args):
             if show_steps:
                 print(*args)
@@ -446,9 +445,9 @@ class Tokenizer:
         return formatted_tokens
 
 
-def parse(text, font):
-    token = Tokenizer.tokenize(text, show_steps=True)
-    return token.get_component().render(font)
+def parse(text, context):
+    token = Tokenizer.tokenize(text)
+    return token.get_component().render(context)
 
 
 # ----- Main ----- #

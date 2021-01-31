@@ -1,0 +1,6 @@
+\t[flags] {} - Parse as LaTeX
+
+\h[num_before] - Get history
+
+\s[name] {} - Save template
+\l[name] {} - Load template
