@@ -5,8 +5,7 @@ LHF is a LaTeX to Unicode parser that is activated by a configurable hotkey. Whe
 Several formatting controls exist, which determine what the formatter will do with any given bit of input.
 
 #### LaTeX:
-`\t` will convert anything following it from LaTeX into a unicode representation.
-This flag can only be used at the beginning of a line.
+`\t` will convert anything following it from LaTeX into a unicode representation. This flag can only be used at the beginning of a line.
 
 Any text found between two `$` symbols will also be converted from LaTeX into unicode. To include a regular dollar sign, use `\$`.
 
@@ -22,7 +21,9 @@ When `\s[name]` is placed at the beginning of the captured string, the rest of t
 
 `\l[name]` can be present anywhere within a string, and it will be replaced with the saved template with that name. If no template with that name, can be found, it will not be replaced.
 
-`\d[name]` can be used to delete a template. This flag can only be used on its own - no other text must be present. 
+`\d[name]` can be used to delete a template. This flag can only be used on its own.
+
+To obtain a list of all templates, use `\lt`. This flag can only be used on its own.
 
 ### Requirements:
 Windows:

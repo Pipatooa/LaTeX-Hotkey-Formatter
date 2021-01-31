@@ -63,6 +63,11 @@ def reformat(original):
     _context = context_manager.get_context()
     print(original, _context)
 
+    if original == r"\lt":
+        if _templates:
+            return "All templates: " + ", ".join(name for name in _templates)
+        return "No templates"
+
     if match := re.fullmatch(r"^\\s\[([\w\d\s]+?)] ?([\w\W]+)", original):
         name, template = match.groups()
         _templates[name] = template
