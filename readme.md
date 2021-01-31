@@ -4,29 +4,29 @@ LHF is a LaTeX to Unicode parser that is activated by a configurable hotkey. Whe
 ### Formatting controls:
 Several formatting controls exist, which determine what the formatter will do with any given bit of input.
 
-##### LaTeX:
+#### LaTeX:
 `\t` will convert anything following it from LaTeX into a unicode representation.
 This flag can only be used at the beginning of a line.
 
 Any text found between two `$` symbols will also be converted from LaTeX into unicode. To include a regular dollar sign, use `\$`.
 
-##### History:
+#### History:
 `\h` can be used to retrieve a history entry. By default, it will be replaced with the previous entry. To retrieve further history `\h[entry_num]` can be used where `entry_num` is the number of entries to look back. `\h[1]` will return the previous entry, `\h[2]` will return the next previous, and so forth. This flag can be used anywhere within a section of text.
 
 `\lh[entries]` can be used to retrieve a list of history entries, where `entries` is the number of previous entries to display. This flag can only be used on its own - no other text must be present.
 
-##### Templates:
+#### Templates:
 `\s[name]` and `\l[name]` can be used to save and load templates where `name` is the name of the template to be loaded.
 
-When `\s[name]` is placed at the beginning of a new line, anything following the flag will be saves as a template.
+When `\s[name]` is placed at the beginning of the captured string, the rest of the string will be saved as a template.
 
 `\l[name]` can be present anywhere within a string, and it will be replaced with the saved template with that name. If no template with that name, can be found, it will not be replaced.
 
-`\d[name]` can also be used to delete a template.
+`\d[name]` can be used to delete a template. This flag can only be used on its own - no other text must be present. 
 
 ### Requirements:
 Windows:
-```requirements.txt
+```
 pynput~=1.7.2
 pyperclip~=1.8.1
 fonttools~=4.18.2

@@ -36,6 +36,10 @@ def get_highlighted():
 
 
 def paste_output(output):
+    if output == "":
+        controller.touch(pynput.keyboard.Key.backspace, True)
+        return
+
     old_clipboard = pyperclip.paste()
 
     pyperclip.copy(output)
