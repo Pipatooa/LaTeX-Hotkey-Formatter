@@ -42,6 +42,7 @@ latex_by_default = 1
 
 [Parser]
 show_steps = 0
+allow_fraction_shortcut = 1
 ```
 #### Fields:
 ###### Formatting Controls:
