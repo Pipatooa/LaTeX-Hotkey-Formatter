@@ -383,7 +383,39 @@ class Tokenizer:
             if name == "left" or name == "right":
                 continue
 
-            if name not in components.function_components:
+            if name in simple_functions:
+                next_token = tokens[0]
+                if type(next_token) is not Tokenizer.TokenGroup:
+                    print("Encountered simple function '{}' but no following group. Treating as text".format(name))
+                    token.text = name + " "
+                    token.skip_formatting = True
+                    parsed_tokens.append(token)
+                    continue
+
+                if len(next_token.tokens) != 1 or type(contents := next_token.tokens[0]) is not Tokenizer.BasicToken:
+                    print("Encountered simple function '{}' but following group was not valid. Treating as text"
+                          .format(name))
+                    token.text = name + " "
+                    token.skip_formatting = True
+                    parsed_tokens.append(token)
+                    continue
+
+                if contents.text not in simple_functions[name]:
+                    print("The simple function '{}' has no defined output for the input '{}'. Treating as text"
+                          .format(name, contents.text))
+                    token.text = name + " "
+                    token.skip_formatting = True
+                    parsed_tokens.append(token)
+                    continue
+
+                tokens.popleft()
+
+                token.text = simple_functions[name][contents.text]
+                token.skip_formatting = True
+                parsed_tokens.append(token)
+                continue
+
+            elif name not in components.function_components:
                 print("Encountered unknown function '{}'. Treating as text".format(name))
                 token.text = name + " "
                 token.skip_formatting = True
@@ -478,18 +510,13 @@ with open("symbols/variables.txt", encoding="utf-8") as file:
 
 # print(variable_chars.values())
 
-# \log\left|3x\right|+\frac{\left|\left|\frac{\pi}{7x^{2}+2}\right|\right|-2x}{3}+5=-10x
-# \left|\left|\left|x\right|\right|\left|\left|x\right|\right|\right|
-# {}}
-# \left|\left|\left|\left|x\right|\right|\left|x\right|\left|\left|x\right|\right|\left|xx\right|\right|\right|
-# \left|\frac{\left|x\right|}{\left|x+3\right|}\right|
-# \pi + \frac{2x}{3a} + x^2
-# text = r"3^x + 5 = 0"
-# context = context_manager.get_context()
-# print(context)
-#
-# rendered = parse(text, context.font)
-# # rendered = parse(text, context_manager.FontInfo("./fonts/JetBrainsMono/JetBrainsMono-Light.ttf"))
-# # rendered = parse(text, context_manager.FontInfo("./fonts/Whitney/whitneylight.otf"))
-# # rendered = parse(text, context_manager.FontInfo("./fonts/Roboto/Roboto-Regular.ttf"))
-# print(rendered)
+simple_functions = {}
+with open("symbols/simple_functions.txt", encoding="utf-8") as file:
+    for line in file.readlines():
+        if line.strip() and not line.strip().startswith("#"):
+            x, y, z = line.strip().split(" ")
+            if x not in simple_functions:
+                simple_functions[x] = {}
+            simple_functions[x][y] = z
+
+# print(simple_functions.items())

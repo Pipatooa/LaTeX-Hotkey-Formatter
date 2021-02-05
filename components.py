@@ -170,20 +170,29 @@ class ComponentContainer(Component):
 
 
 class Fraction(Component):
-    def __init__(self, top, bottom, div_char, overfill):
+    def __init__(self, top, bottom, div_char_simple, div_char_complex, overfill):
         super().__init__()
         self.top = top
         self.bottom = bottom
 
-        self.div_char = div_char
+        self.div_char_simple = div_char_simple
+        self.div_char_complex = div_char_complex
         self.overfill = overfill
 
-    def build(self, build_context):
+    def _build_simple(self, top_simplified, bottom_simplified, build_context):
+        raw_line = top_simplified + self.div_char_simple + bottom_simplified
+
+        width = build_context.context.font.get_text_width(raw_line)
+        lines = [Line(0, raw_line)]
+
+        return BuiltComponent(width, 1, lines, 0, "inline")
+
+    def _build_complex(self, build_context):
         top_built = self.top.build(build_context.new())
         bottom_built = self.bottom.build(build_context.new())
 
-        div_char_width = build_context.context.font.get_text_width(self.div_char)
-        divider = self.div_char * (math.ceil(max(top_built.width, bottom_built.width) / div_char_width) + self.overfill)
+        div_char_width = build_context.context.font.get_text_width(self.div_char_complex)
+        divider = self.div_char_complex * (math.ceil(max(top_built.width, bottom_built.width) / div_char_width) + self.overfill)
 
         width = build_context.context.font.get_text_width(divider)
         baseline = len(bottom_built.lines)
@@ -200,6 +209,15 @@ class Fraction(Component):
         lines = bottom_built.lines + [Line(0, divider)] + top_built.lines
 
         return BuiltComponent(width, len(lines), lines, baseline, "inline")
+
+    def build(self, build_context):
+        top_simple, top_simplified = ScriptGroup.simplify_superscript(self.top)
+        bottom_simple, bottom_simplified = ScriptGroup.simplify_subscript(self.bottom)
+
+        if top_simple and bottom_simple:
+            return self._build_simple(top_simplified, bottom_simplified, build_context)
+
+        return self._build_complex(build_context)
 
 
 class FlexChars:
@@ -301,11 +319,11 @@ class ScriptGroup(Component):
         self.superscript = superscript
 
     @staticmethod
-    def simplify(component, char_set):
+    def _simplify(component, char_set):
         if type(component) is ComponentContainer:
             simplified_components = []
             for c in component.components:
-                simple, simplified = ScriptGroup.simplify(c, char_set)
+                simple, simplified = ScriptGroup._simplify(c, char_set)
 
                 if not simple:
                     return False, None
@@ -327,14 +345,22 @@ class ScriptGroup(Component):
             simplified_components.append(char_set[char])
         return True, "".join(simplified_components)
 
+    @staticmethod
+    def simplify_superscript(component):
+        return ScriptGroup._simplify(component, ScriptGroup._superscript_chars)
+
+    @staticmethod
+    def simplify_subscript(component):
+        return ScriptGroup._simplify(component, ScriptGroup._subscript_chars)
+
     def build(self, build_context):
-        bottom_simple, bottom_simplified = ScriptGroup.simplify(self.subscript, ScriptGroup._subscript_chars)
+        bottom_simple, bottom_simplified = ScriptGroup.simplify_subscript(self.subscript)
         if bottom_simple:
             subscript = TextComponent(bottom_simplified).build(build_context.new())
         else:
             subscript = self.subscript.build(build_context.new())
 
-        top_simple, top_simplified = ScriptGroup.simplify(self.superscript, ScriptGroup._superscript_chars)
+        top_simple, top_simplified = ScriptGroup.simplify_superscript(self.superscript)
         if top_simple:
             superscript = TextComponent(top_simplified).build(build_context.new())
         else:
@@ -375,5 +401,5 @@ bracket_group_components = {
 }
 
 function_components = {
-    "frac": (Fraction, 2, ("—", 1))
+    "frac": (Fraction, 2, ("⁄", "—", 1))
 }

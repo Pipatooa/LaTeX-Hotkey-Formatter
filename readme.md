@@ -101,18 +101,18 @@ These files define characters which can easily be mapped into subscript or super
 
 ### symbols/simple_functions.txt:
 ```
-mathbb{C} ℂ
-mathcal{g} ℊ
-mathcal{H} ℋ
-mathfrak{H} ℌ
-mathbb{H} ℍ
-mathcal{I} ℐ
-mathcal{L} ℒ
-mathbb{N} ℕ
-mathbb{P} ℙ
-mathbb{Q} ℚ
+mathbb C ℂ
+mathcal g ℊ
+mathcal H ℋ
+mathfrak H ℌ
+mathbb H ℍ
+mathcal I ℐ
+mathcal L ℒ
+mathbb N ℕ
+mathbb P ℙ
+mathbb Q ℚ
 ```
-**simple_functions.txt** defines simple functions which have fixed inputs and outputs. Pairs of values are separated with a space. Instances of `\func{input}` are replaced with the corresponding output, as defined in the file.
+**simple_functions.txt** defines simple functions which have fixed inputs and outputs. Value triplets are separated with a space. Instances of `\func{input}` are replaced with the corresponding output, as defined in the file, where `func` is the first defined value, `input` is the second, and the corresponding output is the third defined value.
 
 Eg. `\mathbb{N}` is converted into `ℕ`.
 
