@@ -34,21 +34,22 @@ def _save_templates(templates):
 
 
 def _substitute_templates(match):
-    name = match.group(1)
+    before, name = match.groups()
 
     if name not in _templates:
         prefix = config.config["Formatting Controls"]["prefix"]
         return fr"{prefix}l[{name}]"
 
-    return _templates[name]
+    return before + _templates[name]
 
 
 def _substitute_latex(match):
     if type(match) is re.Match:
-        content = match.group(1)
+        before, content, after = match.groups()
         content = content.replace("\\$", "$")
+        content += after
     elif type(match) is str:
-        content = match
+        before, content = "", match
     else:
         raise TypeError(f"Cannot perform latex substitution on type {type(match)}")
 
@@ -62,7 +63,7 @@ def _substitute_latex(match):
         parsed = content
 
     if len(parsed.split("\n")) > 1:
-        return "\n" + parsed + "\n"
+        return before + "\n" + parsed + "\n"
 
     return parsed
 
@@ -99,7 +100,7 @@ def reformat(original):
 
     new_lines = []
     for line in original.split("\n"):
-        line, num_replaced = re.subn(fr"(?<!\\)(?:\\\\)*{escaped_prefix}l\[([\w\d\s]+?)]", _substitute_templates, line)
+        line, num_replaced = re.subn(fr"(?<!\\)((?:\\\\)*){escaped_prefix}l\[([\w\d\s]+?)]", _substitute_templates, line)
 
         if num_replaced > 0:
             new_lines.append(line)
@@ -111,6 +112,7 @@ def reformat(original):
             else:
                 content = line
 
+            print("a")
             new = _substitute_latex(content)
             new_lines.append(new)
         else:
@@ -119,7 +121,7 @@ def reformat(original):
             else:
                 content = line
 
-            new = re.sub(r"(?<!\\)(?:\\\\)*\$(.*?)(?<!\\)(?:\\\\)*\$", _substitute_latex, content)
+            new = re.sub(r"(?<!\\)((?:\\\\)*)\$(.*?)(?<!\\)((?:\\\\)*)*\$", _substitute_latex, content)
             new_lines.extend(new.split("\n"))
 
     return "\n".join(new_lines).lstrip("\n").rstrip()

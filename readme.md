@@ -53,7 +53,7 @@ allow_fraction_shortcut = 1
 ###### Parser:
 `show_steps` whether to show each step of LaTeX parsing for debug purposes.
 
-`allow_fraction_shortcut` allows the use of `a/b` or `{a + b}/{c + d}` to denote `\frac{a}{b}` and `\frac{a + b}{c + d}` respectively.
+`allow_fraction_shortcut` allows the use of `a/b` and `{a + b}/{c + d}` to denote `\frac{a}{b}` and `\frac{a + b}{c + d}` respectively.
 
 ### contexts.ini:
 ```ini
@@ -94,11 +94,11 @@ cent ¢
 pounds £
 yen ¥
 ```
-**symbols.txt** defines the conversion for many of the symbols within LaTeX. Pairs of values are separated with a space. Instances of `\name` will be replaced with the symbol corresponding to `name`, as defined in the file.
+**symbols.txt** defines names of symbols within LaTeX. Instances of `\name` will be replaced with the symbol corresponding to `name`, as defined in the file.
 
 Eg. `\yen` is converted into `¥`.
 
-Comments can be included in the file using the `#` prefix and blank lines are ignored.
+Comments can be included in the file using the `#` prefix and blank lines are ignored. Pairs of values are separated with a space.
 
 ### symbols/spacing_chars.txt:
 ```
@@ -120,7 +120,7 @@ Comments can be included in the file using the `#` prefix and blank lines are ig
 8 ₈
 9 ₉
 ```
-These files define characters which can easily be mapped into subscript or superscript versions of themselves. When a subscript or superscript is made entirely of these characters, these characters will be used instead of placing them on the line above or below.
+These files define characters which can be mapped into subscript or superscript versions of themselves. When a subscript or superscript is made entirely of these characters, these characters will be used instead of placing them on the line above or below.
 
 ### symbols/simple_functions.txt:
 ```
@@ -135,11 +135,11 @@ mathbb N ℕ
 mathbb P ℙ
 mathbb Q ℚ
 ```
-**simple_functions.txt** defines simple functions which have fixed inputs and outputs. Value triplets are separated with a space. Instances of `\func{input}` are replaced with the corresponding output, as defined in the file, where `func` is the first defined value, `input` is the second, and the corresponding output is the third defined value.
+**simple_functions.txt** defines simple functions which have fixed inputs and outputs. Instances of `\func{input}` are replaced with the corresponding output, as defined in the file, where `func` is the first defined value, `input` is the second, and the corresponding output is the third defined value.
 
 Eg. `\mathbb{N}` is converted into `ℕ`.
 
-Comments can be included in the file using the `#` prefix and blank lines are ignored.
+Comments can be included in the file using the `#` prefix and blank lines are ignored. Values are separated with a space.
 
 ### symbols/variables.txt:
 ```
