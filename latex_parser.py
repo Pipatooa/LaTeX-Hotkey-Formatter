@@ -20,10 +20,10 @@ class Tokenizer:
             return components.Component()
 
     class BasicToken(Token):
-        def __init__(self, text, /, skip_formatting=False):
+        def __init__(self, text, /, skip_parsing=False):
             super().__init__()
             self.text = text
-            self.skip_formatting = skip_formatting
+            self.skip_parsing = skip_parsing
 
         def get_id(self):
             return "T-BT"
@@ -159,10 +159,12 @@ class Tokenizer:
         show_step(3, tokens)
         tokens = Tokenizer._parse_functions(tokens)
         show_step(4, tokens)
-        tokens = Tokenizer._format_tokens(tokens)
+        tokens = Tokenizer._parse_shortcuts(tokens)
         show_step(5, tokens)
+        tokens = Tokenizer._format_tokens(tokens)
+        show_step(6, tokens)
         token_group = Tokenizer.TokenGroup(tokens)
-        show_step(6, token_group)
+        show_step(7, token_group)
         return token_group
 
     @staticmethod
@@ -354,7 +356,7 @@ class Tokenizer:
             parsed_tokens.append(token)
 
         return parsed_tokens
-    
+
     @staticmethod
     def _parse_functions(tokens):
         parsed_tokens = collections.deque()
@@ -383,7 +385,7 @@ class Tokenizer:
                 if type(next_token) is not Tokenizer.TokenGroup:
                     print("Encountered simple function '{}' but no following group. Treating as text".format(name))
                     token.text = name + " "
-                    token.skip_formatting = True
+                    token.skip_parsing = True
                     parsed_tokens.append(token)
                     continue
 
@@ -391,7 +393,7 @@ class Tokenizer:
                     print("Encountered simple function '{}' but following group was not valid. Treating as text"
                           .format(name))
                     token.text = name + " "
-                    token.skip_formatting = True
+                    token.skip_parsing = True
                     parsed_tokens.append(token)
                     continue
 
@@ -399,21 +401,21 @@ class Tokenizer:
                     print("The simple function '{}' has no defined output for the input '{}'. Treating as text"
                           .format(name, contents.text))
                     token.text = name + " "
-                    token.skip_formatting = True
+                    token.skip_parsing = True
                     parsed_tokens.append(token)
                     continue
 
                 tokens.popleft()
 
                 token.text = simple_functions[name][contents.text]
-                token.skip_formatting = True
+                token.skip_parsing = True
                 parsed_tokens.append(token)
                 continue
 
             elif name not in components.function_components:
                 print("Encountered unknown function '{}'. Treating as text".format(name))
                 token.text = name + " "
-                token.skip_formatting = True
+                token.skip_parsing = True
                 parsed_tokens.append(token)
                 continue
 
@@ -426,7 +428,52 @@ class Tokenizer:
             parsed_tokens.append(function_group)
 
         return parsed_tokens
-    
+
+    @staticmethod
+    def _parse_shortcuts(tokens):
+        parsed_tokens = collections.deque()
+        allow_fraction_shortcut = int(config.config["Parser"]["allow_fraction_shortcut"])
+
+        fraction_class, _, fraction_arguments = components.function_components["frac"]
+
+        while len(tokens) > 0:
+            token = tokens.popleft()
+
+            if isinstance(token, Tokenizer.TokenContainer):
+                token.apply_token_function(Tokenizer._parse_shortcuts)
+                parsed_tokens.append(token)
+                continue
+
+            if token.skip_parsing:
+                parsed_tokens.append(token)
+                continue
+
+            if type(token) is not Tokenizer.BasicToken:
+                parsed_tokens.append(token)
+                continue
+
+            if allow_fraction_shortcut and token.text == "/" and len(parsed_tokens) > 0 and len(tokens) > 0:
+                top = parsed_tokens.pop()
+                bottom = tokens.popleft()
+
+                if type(top) is Tokenizer.BasicToken:
+                    top_tokens = collections.deque()
+                    top_tokens.append(top)
+                    top = Tokenizer.TokenGroup(top_tokens)
+
+                if type(bottom) is Tokenizer.BasicToken:
+                    bottom_tokens = collections.deque()
+                    bottom_tokens.append(bottom)
+                    bottom = Tokenizer.TokenGroup(bottom_tokens)
+
+                function_group = Tokenizer.FunctionGroup("frac", fraction_class, (top, bottom), fraction_arguments)
+                parsed_tokens.append(function_group)
+                continue
+
+            parsed_tokens.append(token)
+
+        return parsed_tokens
+
     @staticmethod
     def _format_tokens(tokens):
         formatted_tokens = collections.deque()
@@ -442,7 +489,7 @@ class Tokenizer:
             if type(token) is not Tokenizer.BasicToken:
                 raise Tokenizer.TokenizationError("Unexpected token type '{}'".format(token.get_id()))
 
-            if token.skip_formatting:
+            if token.skip_parsing:
                 formatted_tokens.append(token)
                 continue
 

@@ -52,6 +52,8 @@ show_steps = 0
 ###### Parser:
 `show_steps` whether to show each step of LaTeX parsing for debug purposes.
 
+`allow_fraction_shortcut` allows the use of `a/b` or `{a + b}/{c + d}` to denote `\frac{a}{b}` and `\frac{a + b}/{c + d}` respectively.
+
 ### contexts.ini:
 ```ini
 [DEFAULT]
