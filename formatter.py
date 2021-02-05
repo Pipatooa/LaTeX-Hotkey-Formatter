@@ -6,6 +6,8 @@ import time
 import context_manager
 import latex_parser
 
+import config
+
 _context = None
 
 
@@ -32,28 +34,29 @@ def _save_templates(templates):
 
 
 def _substitute_templates(match):
-    before, name = match.groups()
+    name = match.group(1)
 
     if name not in _templates:
-        return fr"{before}\l[{name}]"
+        prefix = config.config["Formatting Controls"]["prefix"]
+        return fr"{prefix}l[{name}]"
 
-    return before + _templates[name]
+    return _templates[name]
 
 
 def _substitute_latex(match):
     if type(match) is re.Match:
-        before, content = match.groups()
+        content = match.group(1)
         content = content.replace("\\$", "$")
     elif type(match) is str:
-        before, content = "", match
+        content = match
     else:
-        raise TypeError(f"Cannot perform latex subsitution on type {type(match)}")
+        raise TypeError(f"Cannot perform latex substitution on type {type(match)}")
 
     parsed = latex_parser.parse(content, _context)
     if len(parsed.split("\n")) > 1:
-        return before + "\n" + parsed + "\n"
+        return "\n" + parsed + "\n"
 
-    return before + parsed
+    return parsed
 
 
 def reformat(original):
@@ -63,17 +66,21 @@ def reformat(original):
     _context = context_manager.get_context()
     print(original, _context)
 
-    if original == r"\lt":
+    prefix = config.config["Formatting Controls"]["prefix"]
+    escaped_prefix = re.escape(prefix)
+
+    latex_by_default = int(config.config["Formatting Controls"]["latex_by_default"])
+    if original == f"{prefix}lt":
         if _templates:
             return "All templates: " + ", ".join(name for name in _templates)
         return "No templates"
 
-    if match := re.fullmatch(r"^\\s\[([\w\d\s]+?)] ?([\w\W]+)", original):
+    if match := re.fullmatch(fr"^{escaped_prefix}s\[([\w\d\s]+?)] ?([\w\W]+)", original):
         name, template = match.groups()
         _templates[name] = template
         return ""
 
-    if match := re.fullmatch(r"^\\d\[([\w\d\s]+?)]", original):
+    if match := re.fullmatch(fr"^{escaped_prefix}d\[([\w\d\s]+?)]", original):
         name = match.group(1)
 
         if name in _templates:
@@ -84,18 +91,27 @@ def reformat(original):
 
     new_lines = []
     for line in original.split("\n"):
-        line, num_replaced = re.subn(r"(^|(?:\\\\|\\?[^\\])+?)\\l\[([\w\d\s]+?)]", _substitute_templates, line)
+        line, num_replaced = re.subn(fr"(?<!\\)(?:\\\\)*{escaped_prefix}l\[([\w\d\s]+?)]", _substitute_templates, line)
 
         if num_replaced > 0:
             new_lines.append(line)
             continue
 
-        if line.startswith(r"\t"):
-            content = line[2:]
+        if line.startswith(f"{prefix}t") or not line.startswith(f"{prefix}r") and latex_by_default:
+            if line.startswith(f"{prefix}t"):
+                content = line[len(prefix) + 1:]
+            else:
+                content = line
+
             new = _substitute_latex(content)
             new_lines.append(new)
         else:
-            new = re.sub(r"((?:[^\\$]|\\.)*)\$((?:[^\\$]|\\.)*)\$", _substitute_latex, line)
+            if line.startswith(f"{prefix}r"):
+                content = line[len(prefix) + 1:]
+            else:
+                content = line
+
+            new = re.sub(r"(?<!\\)(?:\\\\)*\$(.*?)(?<!\\)(?:\\\\)*\$", _substitute_latex, content)
             new_lines.extend(new.split("\n"))
 
     return "\n".join(new_lines).lstrip("\n").rstrip()

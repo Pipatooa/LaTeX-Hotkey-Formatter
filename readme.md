@@ -5,23 +5,25 @@ LHF is a LaTeX to Unicode parser that is activated by a configurable hotkey. Whe
 Several formatting controls exist, which determine what the formatter will do with any given bit of input.
 
 ### LaTeX:
-`\t` will convert anything following it from LaTeX into a unicode representation. This flag can only be used at the beginning of a line.
+`.t` specifies that a line of text should be interpreted as LaTeX. This flag can only be used at the beginning of a line and only has an effect when `latex_by_default` is set to 0.
 
-Any text found between two `$` symbols will also be converted from LaTeX into unicode. To include a regular dollar sign, use `\$`.
+`.r` specifies that a line of text should **not** be interpreted as LaTeX. This flag can only be used at the beginning of a line and only has an effect when `latex_by_default` is set to 1.
+
+Any text found between two `$` symbols will be treated as LaTeX, regardless of what `latex_by_default` is set to. To include a regular dollar sign, use `\$`.
 
 ### History:
-`\h` can be used to retrieve a history entry. By default, it will be replaced with the previous entry. To retrieve further history `\h[entry_num]` can be used where `entry_num` is the number of entries to look back. `\h[1]` will return the previous entry, `\h[2]` will return the next previous, and so forth. This flag can be used anywhere within a section of text.
+`.h` can be used to retrieve a history entry. By default, it will be replaced with the previous entry. To retrieve further history `\h[entry_num]` can be used where `entry_num` is the number of entries to look back. `\h[1]` will return the previous entry, `\h[2]` will return the next previous, and so forth. This flag can be used anywhere within a section of text.
 
-`\lh[entries]` can be used to retrieve a list of history entries, where `entries` is the number of previous entries to display. This flag can only be used on its own - no other text must be present.
+`.lh[entries]` can be used to retrieve a list of history entries, where `entries` is the number of previous entries to display. This flag can only be used on its own - no other text must be present.
 
 ### Templates:
-`\s[name]` and `\l[name]` can be used to save and load templates where `name` is the name of the template to be loaded.
+`.s[name]` and `.l[name]` can be used to save and load templates where `name` is the name of the template to be loaded.
 
 When `\s[name]` is placed at the beginning of the captured string, the rest of the string will be saved as a template.
 
-`\l[name]` can be present anywhere within a string, and it will be replaced with the saved template with that name. If no template with that name, can be found, it will not be replaced.
+`.l[name]` can be present anywhere within a string, and it will be replaced with the saved template with that name. If no template with that name, can be found, it will not be replaced.
 
-Use `\lt` to obtain a list of saved templates and `\d[name]` to delete a template. These flag can only be used on their own.
+Use `.lt` to obtain a list of saved templates and `.d[name]` to delete a template. These flag can only be used on their own.
 
 ## Requirements:
 Windows:
@@ -32,6 +34,17 @@ fonttools~=4.18.2
 ```
 
 ## Config:
+### config.ini
+```ini
+[Formatting Controls]
+prefix = .
+latex_by_default = 1
+```
+#### Fields:
+`prefix` prefix to be used for formatting controls such as `.r` and `.t`
+
+`latex_by_default` if true, input text will be treated as LaTeX unless `.r` as used.
+
 ### contexts.ini:
 ```ini
 [DEFAULT]
