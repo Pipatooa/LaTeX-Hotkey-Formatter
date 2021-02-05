@@ -100,7 +100,8 @@ def reformat(original):
 
     new_lines = []
     for line in original.split("\n"):
-        line, num_replaced = re.subn(fr"(?<!\\)((?:\\\\)*){escaped_prefix}l\[([\w\d\s]+?)]", _substitute_templates, line)
+        line, num_replaced = re.subn(fr"(?<!\\)((?:\\\\)*){escaped_prefix}l\[([\w\d\s]+?)]", _substitute_templates,
+                                     line)
 
         if num_replaced > 0:
             new_lines.append(line)
@@ -112,8 +113,8 @@ def reformat(original):
             else:
                 content = line
 
-            print("a")
-            new = _substitute_latex(content)
+            new = re.sub(r"(?<!\\)((?:\\\\)*)\$(.*?)(?<!\\)((?:\\\\)*)*\$", r"\1\2\3", content)
+            new = _substitute_latex(new)
             new_lines.append(new)
         else:
             if line.startswith(f"{prefix}r"):
