@@ -39,11 +39,18 @@ fonttools~=4.18.2
 [Formatting Controls]
 prefix = .
 latex_by_default = 1
+
+[Parser]
+show_steps = 0
 ```
 #### Fields:
-`prefix` prefix to be used for formatting controls such as `.r` and `.t`
+###### Formatting Controls:
+`prefix` prefix to be used for formatting controls such as `.r` and `.t`.
 
 `latex_by_default` if true, input text will be treated as LaTeX unless `.r` as used.
+
+###### Parser:
+`show_steps` whether to show each step of LaTeX parsing for debug purposes.
 
 ### contexts.ini:
 ```ini
@@ -68,7 +75,7 @@ The `[DEFAULT]` section specifies the options that will be used if a matching co
 #### Fields:
 `font` path to font used. The `MONOSPACED` key can be used to specify a generic monospaced font.
 
-`tabsize` the size of a tab character measured in spaces. Can be float.
+`tabsize` the size of a tab character measured in spaces. Can be float value.
 
 ### symbols/symbols.txt:
 ```yaml

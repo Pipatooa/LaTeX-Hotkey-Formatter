@@ -1,6 +1,7 @@
 import collections
 import re
 
+import config
 import components
 
 
@@ -302,57 +303,51 @@ class Tokenizer:
                 parsed_tokens.append(token)
                 continue
 
-            if token.text == "^":
+            if token.text == "_":
+                script_flag = 1
+            elif token.text == "^":
+                script_flag = 2
+            else:
+                script_flag = 0
+
+            if script_flag:
                 if len(parsed_tokens) > 0:
                     base = parsed_tokens.pop()
                 else:
-                    base = ""
+                    base = Tokenizer.BasicToken("")
 
                 if type(base) is Tokenizer.ScriptGroup:
-                    if len(base.superscript) == 0:
-                        tokens, (exponent,) = Tokenizer._fetch_tokens(tokens, ("",))
-                        base.superscript.append(exponent)
+                    if script_flag == 1 and len(base.subscript) == 0 or script_flag == 2 and len(base.superscript) == 0:
+                        tokens, (script,) = Tokenizer._fetch_tokens(tokens, ("",))
+
+                        if script_flag == 1:
+                            base.subscript.append(script)
+                        else:
+                            base.superscript.append(script)
+
                         parsed_tokens.append(base)
                         continue
+                    elif script_flag == 1:
+                        raise Tokenizer.TokenizationError("Multiple subscripts found inline")
                     else:
                         raise Tokenizer.TokenizationError("Multiple superscripts found inline")
 
-                tokens, (exponent,) = Tokenizer._fetch_tokens(tokens, ("",))
+                tokens, (script,) = Tokenizer._fetch_tokens(tokens, ("",))
                 group = Tokenizer.ScriptGroup(base)
 
-                if isinstance(exponent, Tokenizer.TokenGroup):
-                    exponent.apply_token_function(Tokenizer._parse_scripts)
-                elif exponent.text == "^":
+                if isinstance(script, Tokenizer.TokenGroup):
+                    script.apply_token_function(Tokenizer._parse_scripts)
+
+                elif script_flag == 1 and script.text == "_":
+                    raise Tokenizer.TokenizationError("Multiple subscripts found inline")
+                elif script_flag == 2 and script.text == "^":
                     raise Tokenizer.TokenizationError("Multiple superscripts found inline")
 
-                group.superscript.append(exponent)
-                parsed_tokens.append(group)
-                continue
-
-            elif token.text == "_":
-                if len(parsed_tokens) > 0:
-                    base = parsed_tokens.pop()
+                if script_flag == 1:
+                    group.subscript.append(script)
                 else:
-                    base = ""
+                    group.superscript.append(script)
 
-                if type(base) is Tokenizer.ScriptGroup:
-                    if len(base.subscript) == 0:
-                        tokens, (exponent,) = Tokenizer._fetch_tokens(tokens, ("",))
-                        base.subscript.append(exponent)
-                        parsed_tokens.append(base)
-                        continue
-                    else:
-                        raise Tokenizer.TokenizationError("Multiple subscripts found inline")
-
-                tokens, (subscript,) = Tokenizer._fetch_tokens(tokens, ("",))
-                group = Tokenizer.ScriptGroup(base)
-
-                if isinstance(subscript, Tokenizer.TokenGroup):
-                    subscript.apply_token_function(Tokenizer._parse_scripts)
-                elif subscript.text == "^":
-                    raise Tokenizer.TokenizationError("Multiple subscripts found inline")
-
-                group.subscript.append(subscript)
                 parsed_tokens.append(group)
                 continue
 
@@ -478,7 +473,8 @@ class Tokenizer:
 
 
 def parse(text, context):
-    token = Tokenizer.tokenize(text)
+    show_steps = bool(int(config.config["Parser"]["show_steps"]))
+    token = Tokenizer.tokenize(text, show_steps)
     return token.get_component().render(context)
 
 

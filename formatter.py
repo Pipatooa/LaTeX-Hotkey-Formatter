@@ -52,7 +52,15 @@ def _substitute_latex(match):
     else:
         raise TypeError(f"Cannot perform latex substitution on type {type(match)}")
 
-    parsed = latex_parser.parse(content, _context)
+    try:
+        parsed = latex_parser.parse(content, _context)
+    except latex_parser.Tokenizer.TokenizationError as e:
+        print(e)
+        parsed = content
+    except latex_parser.Tokenizer.BuildError as e:
+        print(e)
+        parsed = content
+
     if len(parsed.split("\n")) > 1:
         return "\n" + parsed + "\n"
 
@@ -97,7 +105,7 @@ def reformat(original):
             new_lines.append(line)
             continue
 
-        if line.startswith(f"{prefix}t") or not line.startswith(f"{prefix}r") and latex_by_default:
+        if line.startswith(f"{prefix}t") or latex_by_default and not line.startswith(f"{prefix}r"):
             if line.startswith(f"{prefix}t"):
                 content = line[len(prefix) + 1:]
             else:
