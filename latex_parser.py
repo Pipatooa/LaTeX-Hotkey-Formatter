@@ -200,7 +200,10 @@ class Tokenizer:
                 escape_state = "\\"
                 continue
 
-            if escape_state == "\\" and token_text == "left" or token_text == "right":
+            if (escape_state == "left" or escape_state == "right") and token_text == "\\":
+                continue
+
+            if escape_state == "\\" and (token_text == "left" or token_text == "right"):
                 escape_state = basic_token.text
                 continue
 
@@ -223,6 +226,7 @@ class Tokenizer:
                 closing = pairs[opening]
                 depth = 1
                 escape_state = None
+                print("abc")
                 continue
 
             if group_flag and token_text == "{" and escape_state is None:
@@ -505,10 +509,17 @@ class Tokenizer:
                 last_token.apply_token_function(Tokenizer._add_spacing)
                 formatted_tokens.append(last_token)
 
-                if type(last_token) is not Tokenizer.ScriptGroup or type(token) is not Tokenizer.ScriptGroup:
-                    if type(token) is Tokenizer.BasicToken and token.text in non_spaced_chars:
-                        continue
-                    formatted_tokens.append(Tokenizer.BasicToken(" "))
+                if type(last_token) is Tokenizer.ScriptGroup and type(token) is Tokenizer.ScriptGroup \
+                        or type(token) is Tokenizer.BasicToken and token.text in non_spaced_chars:
+                    continue
+
+                formatted_tokens.append(Tokenizer.BasicToken(" "))
+                continue
+
+            if type(last_token) is Tokenizer.BasicToken and last_token.skip_parsing:
+                formatted_tokens.append(last_token)
+                formatted_tokens.append(Tokenizer.BasicToken(" "))
+                print("a")
                 continue
 
             if type(last_token) is not Tokenizer.BasicToken or type(token) is not Tokenizer.BasicToken:
@@ -529,7 +540,8 @@ class Tokenizer:
             elif last_token.text in equality_operator_chars and token.text in unary_operator_chars:
                 unary_flag = True
                 formatted_tokens.append(Tokenizer.BasicToken(" "))
-            elif any(char not in non_spaced_chars for char in last_token.text) or token.text not in non_spaced_chars:
+            elif any(char not in non_spaced_chars for char in last_token.text) \
+                    or any(char not in non_spaced_chars for char in token.text):
                 formatted_tokens.append(Tokenizer.BasicToken(" "))
 
         if isinstance(token, Tokenizer.TokenContainer):

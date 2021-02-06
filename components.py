@@ -377,7 +377,7 @@ class ScriptGroup(Component):
 
 # ------ Main ----- #
 bracket_group_arguments = {
-    "(": (FlexChars(*"⎧⎧⎩⎧⎪⎪⎪⎩⎪"), FlexChars(*"⎫⎫⎭⎫⎪⎪⎪⎭⎪")),
+    "(": (FlexChars(*"(⎧⎩⎧⎪⎪⎪⎩⎪"), FlexChars(*")⎫⎭⎫⎪⎪⎪⎭⎪")),
     "{": (FlexChars(*"{⎰⎱⎧⎭⎨⎫⎩⎢"), FlexChars(*"}⎱⎰⎫⎩⎬⎧⎭⎪")),
     "[": (FlexChars(*"[⎡⎣⎡⎢⎢⎢⎣⎢"), FlexChars(*"]⎤⎦⎤⎢⎢⎢⎦⎢")),
     "|": (FlexChars(*"⎢⎢⎢⎢⎢⎢⎢⎢⎢"), FlexChars(*"⎢⎢⎢⎢⎢⎢⎢⎢⎢"))

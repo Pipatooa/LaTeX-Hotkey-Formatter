@@ -13,8 +13,10 @@ _context = None
 def _template_saver():
     global _saved_templates
 
+    save_frequency = float(config.config["Misc"]["template_save_frequency"])
+
     while True:
-        time.sleep(1)
+        time.sleep(save_frequency)
 
         if _saved_templates != _templates:
             _save_templates(_templates)

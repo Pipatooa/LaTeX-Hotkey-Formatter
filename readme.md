@@ -66,6 +66,7 @@ allow_fraction_shortcut = 1
 [Misc]
 glyph_width_cache_size = 250
 text_width_cache_size = 50
+template_save_frequency = 1.0
 ```
 
 #### Fields:
@@ -87,6 +88,8 @@ text_width_cache_size = 50
 `glyph_width_cache_size` number of characters to cache within character width lookup function for each font.
 
 `text_width_cache_size` number of strings to cache within text width lookup function for each font.
+
+`template_save_frequency` time in seconds to wait before checking whether templates have changed and need saving.
 
 ### contexts.ini:
 
