@@ -222,15 +222,19 @@ class Fraction(Component):
 
 
 class FlexChars:
-    def __init__(self, top, mid, bottom, top_double, bottom_double, single):
+    def __init__(self, single, double_top, double_bottom, top, top_mid, mid, bottom_mid, bottom, filler):
+        self.single = single
+
+        self.double_top = double_top
+        self.double_bottom = double_bottom
+
         self.top = top
+        self.top_mid = top_mid
         self.mid = mid
+        self.bottom_mid = bottom_mid
         self.bottom = bottom
 
-        self.top_double = top_double
-        self.bottom_double = bottom_double
-
-        self.single = single
+        self.filler = filler
 
     def get_chars(self, length):
         if length == 1:
@@ -238,12 +242,22 @@ class FlexChars:
             return
 
         elif length == 2:
-            yield self.bottom_double
-            yield self.top_double
+            yield self.double_top
+            yield self.double_bottom
+
+        elif length % 2 == 1:
+            yield self.bottom
+            yield from (self.filler for _ in range((length - 3) // 2))
+            yield self.mid
+            yield from (self.filler for _ in range((length - 3) // 2))
+            yield self.top
 
         else:
             yield self.bottom
-            yield from (self.mid for _ in range(length - 2))
+            yield from (self.filler for _ in range((length - 4) // 2))
+            yield self.bottom_mid
+            yield self.top_mid
+            yield from (self.filler for _ in range((length - 4) // 2))
             yield self.top
 
 
@@ -271,38 +285,6 @@ class FlexibleGroup(ComponentContainer):
         built.width += left_width + right_width
 
         return built
-
-
-class RoundBracketGroup(FlexibleGroup):
-    left_chars = FlexChars("⎧", "⎪", "⎩", "⎧", "⎩", "(")
-    right_chars = FlexChars("⎫", "⎪", "⎭", "⎫", "⎭", ")")
-
-    def __init__(self):
-        super().__init__(RoundBracketGroup.left_chars, RoundBracketGroup.right_chars)
-
-
-class CurlyBracketGroup(FlexibleGroup):
-    left_chars = FlexChars("⎧", "⎨", "⎩", "⎰", "⎱", "{")
-    right_chars = FlexChars("⎫", "⎬", "⎭", "⎱", "⎰", "}")
-
-    def __init__(self):
-        super().__init__(CurlyBracketGroup.left_chars, CurlyBracketGroup.right_chars)
-
-
-class SquareBracketGroup(FlexibleGroup):
-    left_chars = FlexChars("⎡", "⎢", "⎣", "⎡", "⎣", "[")
-    right_chars = FlexChars("⎤", "⎥", "⎦", "⎤", "⎦", "]")
-
-    def __init__(self):
-        super().__init__(SquareBracketGroup.left_chars, SquareBracketGroup.right_chars)
-
-
-class BarBracketGroup(FlexibleGroup):
-    left_chars = FlexChars("⎢", "⎢", "⎢", "⎢", "⎢", "|")
-    right_chars = FlexChars("⎢", "⎢", "⎢", "⎢", "⎢", "|")
-
-    def __init__(self):
-        super().__init__(BarBracketGroup.left_chars, BarBracketGroup.right_chars)
 
 
 class ScriptGroup(Component):
@@ -394,11 +376,11 @@ class ScriptGroup(Component):
 
 
 # ------ Main ----- #
-bracket_group_components = {
-    "(": RoundBracketGroup,
-    "{": CurlyBracketGroup,
-    "[": SquareBracketGroup,
-    "|": BarBracketGroup
+bracket_group_arguments = {
+    "(": (FlexChars(*"⎧⎧⎩⎧⎪⎪⎪⎩⎪"), FlexChars(*"⎫⎫⎭⎫⎪⎪⎪⎭⎪")),
+    "{": (FlexChars(*"{⎰⎱⎧⎭⎨⎫⎩⎢"), FlexChars(*"}⎱⎰⎫⎩⎬⎧⎭⎪")),
+    "[": (FlexChars(*"[⎡⎣⎡⎢⎢⎢⎣⎢"), FlexChars(*"]⎤⎦⎤⎢⎢⎢⎦⎢")),
+    "|": (FlexChars(*"⎢⎢⎢⎢⎢⎢⎢⎢⎢"), FlexChars(*"⎢⎢⎢⎢⎢⎢⎢⎢⎢"))
 }
 
 function_components = {

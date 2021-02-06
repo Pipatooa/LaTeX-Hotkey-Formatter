@@ -68,7 +68,9 @@ class Tokenizer:
             return "T-TC-TG-BG-" + self.opening_char
 
         def get_component(self):
-            container = components.bracket_group_components[self.opening_char]()
+            args = components.bracket_group_arguments[self.opening_char]
+            container = components.FlexibleGroup(*args)
+
             for token in self.tokens:
                 container.add_component(token.get_component())
 
