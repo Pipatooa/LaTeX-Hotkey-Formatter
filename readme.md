@@ -110,7 +110,7 @@ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789?#.°¢£¥®µð�
 
 In practice, characters defined on the first line will clump together into groups and all other characters will be spaced out. Eg. `6x+7\deg` turns into `6x + 7°`, where `6x` and `7°` have been grouped together.
 
-When an equality of comparison character (second line) is followed by a unary operator (third line), space will not be included after the unary operator. Eg. `x=-5` turns into `x = -5` instead of `x = - 5`. When an equality or comparison operator is not present before these unary operators, they will be spaced normally. Eg. `y=x-5` turns into `y = x - 5`.
+When an equality or comparison character (second line) is followed by a unary operator (third line), space will not be included after the unary operator. Eg. `x=-5` turns into `x = -5` instead of `x = - 5`. When an equality or comparison operator is not present before these unary operators, they will be spaced normally. Eg. `y=x-5` turns into `y = x - 5`.
 
 ### symbols/subscript.txt & symbols/superscript.txt:
 ```
