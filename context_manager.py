@@ -8,12 +8,17 @@ from functools import lru_cache
 
 from fontTools.ttLib import TTFont
 
+import config
+
 if sys.platform in ("linux", "linux2"):
     raise NotImplementedError(f"Linux is not currently supported")
 elif sys.platform in ("Windows", "win32", "cygwin"):
     pass
 else:
     raise EnvironmentError(f"Unknown platform {sys.platform}")
+
+_glyph_width_cache_size = int(config.config["Misc"]["glyph_width_cache_size"])
+_text_width_cache_size = int(config.config["Misc"]["text_width_cache_size"])
 
 
 class FontInfo:
@@ -32,13 +37,13 @@ class FontInfo:
             self.not_def = self.glyph_set[".notdef"]
             self.space_width = self._get_glyph_width(" ")
 
-    @lru_cache(maxsize=100)
+    @lru_cache(maxsize=_glyph_width_cache_size)
     def _get_glyph_width(self, char):
         if ord(char) in self.cmap and (c := self.cmap[ord(char)]) in self.glyph_set:
             return self.glyph_set[c].width / self.units_per_em
         return self.not_def.width / self.units_per_em
 
-    @lru_cache(maxsize=50)
+    @lru_cache(maxsize=_text_width_cache_size)
     def get_text_width(self, text):
         return sum(self._get_glyph_width(char) for char in text)
 

@@ -192,7 +192,8 @@ class Fraction(Component):
         bottom_built = self.bottom.build(build_context.new())
 
         div_char_width = build_context.context.font.get_text_width(self.div_char_complex)
-        divider = self.div_char_complex * (math.ceil(max(top_built.width, bottom_built.width) / div_char_width) + self.overfill)
+        divider = self.div_char_complex * (
+                    math.ceil(max(top_built.width, bottom_built.width) / div_char_width) + self.overfill)
 
         width = build_context.context.font.get_text_width(divider)
         baseline = len(bottom_built.lines)

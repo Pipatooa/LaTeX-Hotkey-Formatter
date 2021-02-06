@@ -20,7 +20,7 @@ class Tokenizer:
             return components.Component()
 
     class BasicToken(Token):
-        def __init__(self, text, /, skip_parsing=False):
+        def __init__(self, text, skip_parsing=False):
             super().__init__()
             self.text = text
             self.skip_parsing = skip_parsing
