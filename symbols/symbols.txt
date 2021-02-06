@@ -92,7 +92,6 @@ epsilon ϵ
 varepsilon ε
 backepsilon ϶
 horizbar ―
-| ‖
 twolowline ‗
 dagger †
 ddagger ‡

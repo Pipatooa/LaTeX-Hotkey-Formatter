@@ -1,8 +1,8 @@
 import collections
 import re
 
-import config
 import components
+import config
 
 
 class Tokenizer:
@@ -114,7 +114,7 @@ class Tokenizer:
 
         def __repr__(self):
             return "<SG {} [{}] [{}]>".format(repr(self.base), ", ".join(map(repr, self.subscript)),
-                                                               ", ".join(map(repr, self.superscript)))
+                                              ", ".join(map(repr, self.superscript)))
 
     class FunctionGroup(TokenContainer):
         def __init__(self, name, component_class, groups, arguments):
@@ -161,10 +161,12 @@ class Tokenizer:
         show_step(4, tokens)
         tokens = Tokenizer._parse_shortcuts(tokens)
         show_step(5, tokens)
-        tokens = Tokenizer._format_tokens(tokens)
+        tokens = Tokenizer._add_spacing(tokens)
         show_step(6, tokens)
+        tokens = Tokenizer._compress_tokens(tokens)
+        show_step(7, tokens)
         token_group = Tokenizer.TokenGroup(tokens)
-        show_step(7, token_group)
+        show_step(8, token_group)
         return token_group
 
     @staticmethod
@@ -384,7 +386,7 @@ class Tokenizer:
                 next_token = tokens[0]
                 if type(next_token) is not Tokenizer.TokenGroup:
                     print("Encountered simple function '{}' but no following group. Treating as text".format(name))
-                    token.text = name + " "
+                    token.text = name
                     token.skip_parsing = True
                     parsed_tokens.append(token)
                     continue
@@ -392,7 +394,7 @@ class Tokenizer:
                 if len(next_token.tokens) != 1 or type(contents := next_token.tokens[0]) is not Tokenizer.BasicToken:
                     print("Encountered simple function '{}' but following group was not valid. Treating as text"
                           .format(name))
-                    token.text = name + " "
+                    token.text = name
                     token.skip_parsing = True
                     parsed_tokens.append(token)
                     continue
@@ -400,7 +402,7 @@ class Tokenizer:
                 if contents.text not in simple_functions[name]:
                     print("The simple function '{}' has no defined output for the input '{}'. Treating as text"
                           .format(name, contents.text))
-                    token.text = name + " "
+                    token.text = name
                     token.skip_parsing = True
                     parsed_tokens.append(token)
                     continue
@@ -414,7 +416,7 @@ class Tokenizer:
 
             elif name not in components.function_components:
                 print("Encountered unknown function '{}'. Treating as text".format(name))
-                token.text = name + " "
+                token.text = name
                 token.skip_parsing = True
                 parsed_tokens.append(token)
                 continue
@@ -475,48 +477,90 @@ class Tokenizer:
         return parsed_tokens
 
     @staticmethod
-    def _format_tokens(tokens):
+    def _add_spacing(tokens):
+        if len(tokens) == 0:
+            return collections.deque()
+
         formatted_tokens = collections.deque()
 
-        spacing = None
-        for token in tokens:
-            if isinstance(token, Tokenizer.TokenContainer):
-                token.apply_token_function(Tokenizer._format_tokens)
-                formatted_tokens.append(token)
-                spacing = "full"
-                continue
-
-            if type(token) is not Tokenizer.BasicToken:
-                raise Tokenizer.TokenizationError("Unexpected token type '{}'".format(token.get_id()))
-
-            if token.skip_parsing:
-                formatted_tokens.append(token)
-                continue
-
-            token_text = token.text
-
-            if token_text == "*":
-                token.text = "⋅"
-            elif not token_text.startswith("\\"):
-                # token.text = "".join(variable_chars[char] if char in variable_chars else char for char in token.text)
-                pass
-
-            if spacing is not None and token_text in full_spacing_chars:
-                if spacing == "full":
-                    token.text = " " + token.text + " "
-                elif spacing == "partial":
-                    token.text += " "
-
-                if token_text in spacing_reset_chars:
-                    spacing = None
-                else:
-                    spacing = "partial"
-            else:
-                spacing = "full"
-
+        if len(tokens) == 1 and isinstance(tokens[0], Tokenizer.TokenContainer):
+            token = tokens.popleft()
+            token.apply_token_function(Tokenizer._add_spacing)
             formatted_tokens.append(token)
+            return formatted_tokens
+        elif len(tokens) == 1:
+            formatted_tokens.append(tokens.popleft())
+            return formatted_tokens
 
+        token = tokens.popleft()
+        unary_flag = False
+
+        while len(tokens) > 0:
+            last_token = token
+            token = tokens.popleft()
+
+            if isinstance(last_token, Tokenizer.TokenContainer):
+                last_token.apply_token_function(Tokenizer._add_spacing)
+                formatted_tokens.append(last_token)
+
+                if type(last_token) is not Tokenizer.ScriptGroup or type(token) is not Tokenizer.ScriptGroup:
+                    if type(token) is Tokenizer.BasicToken and token.text in non_spaced_chars:
+                        continue
+                    formatted_tokens.append(Tokenizer.BasicToken(" "))
+                continue
+
+            if type(last_token) is not Tokenizer.BasicToken or type(token) is not Tokenizer.BasicToken:
+                formatted_tokens.append(last_token)
+
+                if type(last_token) is Tokenizer.BasicToken and last_token.text in non_spaced_chars \
+                        and (type(token) is Tokenizer.BracketGroup and token.opening_char != "{"
+                             or type(token) is Tokenizer.ScriptGroup):
+                    continue
+
+                formatted_tokens.append(Tokenizer.BasicToken(" "))
+                continue
+
+            formatted_tokens.append(last_token)
+
+            if unary_flag:
+                unary_flag = False
+            elif last_token.text in equality_operator_chars and token.text in unary_operator_chars:
+                unary_flag = True
+                formatted_tokens.append(Tokenizer.BasicToken(" "))
+            elif any(char not in non_spaced_chars for char in last_token.text) or token.text not in non_spaced_chars:
+                formatted_tokens.append(Tokenizer.BasicToken(" "))
+
+        if isinstance(token, Tokenizer.TokenContainer):
+            token.apply_token_function(Tokenizer._add_spacing)
+
+        formatted_tokens.append(token)
         return formatted_tokens
+
+    @staticmethod
+    def _compress_tokens(tokens):
+        compressed_tokens = collections.deque()
+
+        buffer = []
+        for token in tokens:
+            if type(token) is not Tokenizer.BasicToken:
+                if buffer:
+                    text = "".join(buffer)
+                    compressed_tokens.append(Tokenizer.BasicToken(text))
+                    buffer = []
+
+                if isinstance(token, Tokenizer.TokenContainer):
+                    token.apply_token_function(Tokenizer._compress_tokens)
+
+                compressed_tokens.append(token)
+                continue
+
+            buffer.append(token.text)
+
+        if buffer:
+            text = "".join(buffer)
+            compressed_tokens.append(Tokenizer.BasicToken(text))
+
+        return compressed_tokens
 
 
 def parse(text, context):
@@ -534,15 +578,10 @@ with open("symbols/symbols.txt", encoding="utf-8") as file:
             x, y = line.strip().split(" ")
             symbols[x] = y
 
-# print(symbols.values())
-
 with open("symbols/spacing_chars.txt", encoding="utf-8") as file:
-    full_spacing_chars = set(file.readline().strip())
-    spacing_reset_chars = set(file.readline().strip())
-
-
-# print(full_spacing_chars)
-# print(spacing_reset_chars)
+    non_spaced_chars = set(file.readline().strip())
+    equality_operator_chars = set(file.readline().strip())
+    unary_operator_chars = set(file.readline().strip())
 
 variable_chars = {}
 with open("symbols/variables.txt", encoding="utf-8") as file:
@@ -550,8 +589,6 @@ with open("symbols/variables.txt", encoding="utf-8") as file:
         if line.strip() and not line.strip().startswith("#"):
             x, y = line.strip().split(" ")
             variable_chars[x] = y
-
-# print(variable_chars.values())
 
 simple_functions = {}
 with open("symbols/simple_functions.txt", encoding="utf-8") as file:
@@ -561,5 +598,3 @@ with open("symbols/simple_functions.txt", encoding="utf-8") as file:
             if x not in simple_functions:
                 simple_functions[x] = {}
             simple_functions[x][y] = z
-
-# print(simple_functions.items())

@@ -3,10 +3,9 @@ import re
 import threading
 import time
 
+import config
 import context_manager
 import latex_parser
-
-import config
 
 _context = None
 
