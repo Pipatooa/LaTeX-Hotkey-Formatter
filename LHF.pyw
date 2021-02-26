@@ -1,5 +1,6 @@
 import os
 import time
+import queue
 
 import pynput
 import pyperclip
@@ -9,10 +10,16 @@ import formatter
 os.system("title LaTeX Hotkey formatter")
 controller = pynput.keyboard.Controller()
 
+event_queue = queue.Queue()
+
 
 # Keypress checker
 def on_press(key):
-    if str(key) == "<135>":
+    event_queue.put_nowait(("on_press", key, None))
+
+
+def process_on_press(key):
+    if str(data) == "<135>":
         try:
             highlighted = get_highlighted()
         except pyperclip.PyperclipTimeoutException:
@@ -52,4 +59,14 @@ def paste_output(output):
 
 # ----- Main ----- #
 with pynput.keyboard.Listener(on_press=on_press) as listener:
-    listener.join()
+    while True:
+        event, data, return_queue = event_queue.get()
+
+        try:
+            if event == "on_press":
+                process_on_press(data)
+        except:
+            pass
+
+        if return_queue:
+            return_queue.put(None)

@@ -1,19 +1,9 @@
-import csv
+import font_manager
 
-data = {
-    "a": "b",
-    "c": "d",
-    "e": "f"
-}
+# font_info = font_manager.FontInfo(('Whitney Light', 'HelveticaNeue', 'Helvetica', 'Arial', None))
+font_info = font_manager.FontInfo(None)
 
-with open("./templates.csv", "w", newline="", encoding="utf-8") as file:
-    writer = csv.writer(file)
-    writer.writerow(("Name", "Template"))
-    writer.writerows(data.items())
+print(font_info.get_text_width("—⎭"))
 
-with open("./templates.csv", newline="", encoding="utf-8") as file:
-    reader = csv.reader(file)
-    next(reader)
-
-    for row in reader:
-        a, b = row
+font_info.font.glyphs["—"].save("dash.png")
+font_info.font.glyphs["⎭"].save("bar.png")

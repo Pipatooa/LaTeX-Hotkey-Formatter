@@ -4,11 +4,9 @@ import ctypes.wintypes
 import os
 import re
 import sys
-from functools import lru_cache
-
-from fontTools.ttLib import TTFont
 
 import config
+import font_manager
 
 if sys.platform in ("linux", "linux2"):
     raise NotImplementedError(f"Linux is not currently supported")
@@ -17,77 +15,36 @@ elif sys.platform in ("Windows", "win32", "cygwin"):
 else:
     raise EnvironmentError(f"Unknown platform {sys.platform}")
 
-_glyph_width_cache_size = int(config.config["Misc"]["glyph_width_cache_size"])
-_text_width_cache_size = int(config.config["Misc"]["text_width_cache_size"])
-
-
-class FontInfo:
-    def __init__(self, path=None):
-        self.path = path
-
-        if path is not None:
-            self.font = TTFont(path)
-
-            self.cmap = self.font["cmap"]
-            self.cmap = self.cmap.getcmap(3, 1).cmap
-
-            self.glyph_set = self.font.getGlyphSet()
-            self.units_per_em = self.font["head"].unitsPerEm
-
-            self.not_def = self.glyph_set[".notdef"]
-            self.space_width = self._get_glyph_width(" ")
-
-    @lru_cache(maxsize=_glyph_width_cache_size)
-    def _get_glyph_width(self, char):
-        if ord(char) in self.cmap and (c := self.cmap[ord(char)]) in self.glyph_set:
-            return self.glyph_set[c].width / self.units_per_em
-        return self.not_def.width / self.units_per_em
-
-    @lru_cache(maxsize=_text_width_cache_size)
-    def get_text_width(self, text):
-        return sum(self._get_glyph_width(char) for char in text)
-
-    def __repr__(self):
-        return f"<FontInfo path='{self.path}'>"
-
-
-class MonoSpacedFont(FontInfo):
-    def __init__(self):
-        super().__init__()
-
-        self.font = None
-        self.space_width = 1
-
-    def _get_glyph_width(self, char):
-        return 1
-
-    def get_text_width(self, text):
-        return len(text)
-
-    def __repr__(self):
-        return f"<MonoSpacedFont>"
-
 
 class Context:
     def __init__(self, executable, window_title, entry):
         self.executable = executable
         self.window_title = window_title
 
-        self.font = Context._get_font(entry["font"])
+        self.font_info = self._get_font_info(entry["font"])
         self.tabsize = float(entry["tabsize"])
 
     @staticmethod
-    def _get_font(path):
-        if path == "MONOSPACED":
-            return MonoSpacedFont()
-        return FontInfo(path)
+    def _get_font_info(family_names):
+        if family_names == "MONOSPACED":
+            return font_manager.FontInfo(None, monospaced=True)
+
+        families = family_names.split(", ")
+        families.extend(default_entry["font"].split(", "))
+        families = tuple(None if family == "sans-serif" else family for family in families)
+
+        for family in families:
+            if family is not None and not font_manager.font_exists(family):
+                print(f"Could not find font '{family}'. Install it, or add it to the fonts folder.")
+
+        return font_manager.FontInfo(families)
 
     def check_match(self, executable, window_title):
         return re.fullmatch(self.executable, executable) and re.fullmatch(self.window_title, window_title)
 
     def __repr__(self):
         return f"<Context exe='{self.executable}' title='{self.window_title}' " \
-               f"font={repr(self.font)} tabsize={self.tabsize}>"
+               f"font={repr(self.font_info)} tabsize={self.tabsize}>"
 
 
 def _get_window():

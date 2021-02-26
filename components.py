@@ -1,6 +1,8 @@
 import itertools
 import math
 
+import config
+
 
 class BuildContext:
     def __init__(self, context):
@@ -82,21 +84,33 @@ class Line:
 
         self.items.sort()
 
-        tab_width = context.tabsize * context.font.space_width
+        tab_width = context.tabsize * context.font_info.space_width
         last_pos = 0
 
-        for pos, text in self.items:
-            delta = pos - last_pos
+        rounding_func = {
+            "ROUND": round,
+            "FLOOR": math.floor,
+            "CEIL": math.ceil
+        }[config.config["Misc"]["rounding_function"]]
 
-            num_tabs = math.floor(delta / tab_width)
+        if int(config.config["Parser"]["show_steps"]):
+            print(self.items)
+
+        for pos, text in self.items:
+            if not text:
+                continue
+
+            delta = max(0, pos - last_pos)
+
+            num_tabs = math.floor(rounding_func(delta / context.font_info.space_width) / context.tabsize)
             delta -= num_tabs * tab_width
             last_pos += num_tabs * tab_width
 
-            num_spaces = math.floor(delta / context.font.space_width)
-            last_pos += num_spaces * context.font.space_width
+            num_spaces = rounding_func(delta / context.font_info.space_width)
+            last_pos += num_spaces * context.font_info.space_width
 
             new = "\t" * num_tabs + " " * num_spaces + text
-            last_pos += context.font.get_text_width(text)
+            last_pos += context.font_info.get_text_width(text)
 
             partial.append(new)
 
@@ -129,15 +143,15 @@ class TextComponent(Component):
         self.text = list(reversed(text.split("\n")))
 
     @staticmethod
-    def _center(font, text, width):
-        pos = max(0, width - font.get_text_width(text)) / 2
+    def _center(context, text, width):
+        pos = max(0, width - context.font_info.get_text_width(text)) / 2
         return pos, text
 
     def build(self, build_context):
-        width = max(build_context.context.font.get_text_width(line) for line in self.text)
+        width = max(build_context.context.font_info.get_text_width(line) for line in self.text)
         height = len(self.text)
 
-        lines = [Line(*TextComponent._center(build_context.context.font, line, width)) for line in self.text]
+        lines = [Line(*TextComponent._center(build_context.context, line, width)) for line in self.text]
         baseline = math.ceil(height / 2) - 1
 
         return BuiltComponent(width, height, lines, baseline, "inline")
@@ -182,7 +196,7 @@ class Fraction(Component):
     def _build_simple(self, top_simplified, bottom_simplified, build_context):
         raw_line = top_simplified + self.div_char_simple + bottom_simplified
 
-        width = build_context.context.font.get_text_width(raw_line)
+        width = build_context.context.font_info.get_text_width(raw_line)
         lines = [Line(0, raw_line)]
 
         return BuiltComponent(width, 1, lines, 0, "inline")
@@ -191,11 +205,11 @@ class Fraction(Component):
         top_built = self.top.build(build_context.new())
         bottom_built = self.bottom.build(build_context.new())
 
-        div_char_width = build_context.context.font.get_text_width(self.div_char_complex)
+        div_char_width = build_context.context.font_info.get_text_width(self.div_char_complex)
         divider = self.div_char_complex * (
                     math.ceil(max(top_built.width, bottom_built.width) / div_char_width) + self.overfill)
 
-        width = build_context.context.font.get_text_width(divider)
+        width = build_context.context.font_info.get_text_width(divider)
         baseline = len(bottom_built.lines)
 
         top_delta = (width - top_built.width) / 2
@@ -273,8 +287,8 @@ class FlexibleGroup(ComponentContainer):
         left_chars = list(self.left_chars.get_chars(built.height))
         right_chars = list(self.right_chars.get_chars(built.height))
 
-        left_width = max(build_context.context.font.get_text_width(char) for char in left_chars)
-        right_width = max(build_context.context.font.get_text_width(char) for char in right_chars)
+        left_width = max(build_context.context.font_info.get_text_width(char) for char in left_chars)
+        right_width = max(build_context.context.font_info.get_text_width(char) for char in right_chars)
 
         new_lines = []
         for start_char, line, end_char in zip(left_chars, built.lines, right_chars):
@@ -382,6 +396,8 @@ bracket_group_arguments = {
     "[": (FlexChars(*"[⎡⎣⎡⎢⎢⎢⎣⎢"), FlexChars(*"]⎤⎦⎤⎢⎢⎢⎦⎢")),
     "|": (FlexChars(*"⎢⎢⎢⎢⎢⎢⎢⎢⎢"), FlexChars(*"⎢⎢⎢⎢⎢⎢⎢⎢⎢"))
 }
+
+# —
 
 function_components = {
     "frac": (Fraction, 2, ("⁄", "—", 1))

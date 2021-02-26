@@ -226,7 +226,6 @@ class Tokenizer:
                 closing = pairs[opening]
                 depth = 1
                 escape_state = None
-                print("abc")
                 continue
 
             if group_flag and token_text == "{" and escape_state is None:
